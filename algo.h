@@ -2,15 +2,60 @@
 #define __ALGO_H__
 
 #include <cassert>
+#include <cmath>
 #include <algorithm>
 #include <vector>
 #include <array>
+#include <iostream>
+#include <type_traits>
 
 // DECLARATIONS
 
 namespace algo {
+    // ARITHMETIC
+
     template<typename T>
     constexpr int most_significant_bit(T value);
+
+    template<typename T>
+    T gcd(T a, T b, typename std::make_signed<T>::type &x, typename std::make_signed<T>::type &y);
+
+    // std::make_unsigned<T>::type must support at least Mod^2 sized integers
+    // Sign of T only matters for the interface, computations are mostly done with unsigned integers anyway
+    template<typename T, typename std::make_unsigned<T>::type Mod>
+    class modular {
+        using S = typename std::make_signed<T>::type;
+        using U = typename std::make_unsigned<T>::type;
+    private:
+        U value_ = 0; // 0 <= value_ < Mod
+
+    public:
+        modular& operator=(T value__);
+        modular() = default;
+        modular(T value__) { *this = value__; }
+
+        bool operator==(const modular<T, Mod> &other) const { return value_ == other.value_; }
+        bool operator!=(const modular<T, Mod> &other) const { return value_ != other.value_; }
+
+        modular<T, Mod> inverse() const;
+        modular<T, Mod>& operator+=(const modular<T, Mod> &other);
+        modular<T, Mod>& operator-=(const modular<T, Mod> &other);
+        modular<T, Mod>& operator*=(const modular<T, Mod> &other);
+        modular<T, Mod>& operator/=(const modular<T, Mod> &other);
+        modular<T, Mod> operator+(const modular<T, Mod> &rhs) const { modular<T, Mod> ret(*this); return ret += rhs; };
+        modular<T, Mod> operator-(const modular<T, Mod> &rhs) const { modular<T, Mod> ret(*this); return ret -= rhs; };
+        modular<T, Mod> operator*(const modular<T, Mod> &rhs) const { modular<T, Mod> ret(*this); return ret *= rhs; };
+        modular<T, Mod> operator/(const modular<T, Mod> &rhs) const { modular<T, Mod> ret(*this); return ret /= rhs; };
+
+        T get() const { return value_; }
+    };
+
+    template<typename T, typename std::make_unsigned<T>::type Mod>
+    std::ostream& operator<<(std::ostream &os, const modular<T, Mod> &md) { return os << md.get(); }
+    template<typename T, typename std::make_unsigned<T>::type Mod>
+    std::istream& operator>>(std::istream &is, modular<T, Mod> &md) { T x; is >> x; md = x; return is; }
+
+    // TABULAR
 
     template<typename T>
     class sparse_table {
@@ -37,12 +82,17 @@ namespace algo {
     };
 };
 
+template<typename T, typename std::make_unsigned<T>::type Mod>
+algo::modular<T, Mod> pow(algo::modular<T, Mod> x, typename std::make_signed<T>::type n);
+
 template<typename T>
 algo::sparse_table<T> std::min(const algo::sparse_table<T> &a, const algo::sparse_table<T> &b);
 
 // DEFINITIONS
 
 namespace algo {
+    // ARITHMETIC
+
     template <typename T>
     constexpr int most_significant_bit(T value) {
         assert(value >= 0);
@@ -54,6 +104,69 @@ namespace algo {
         }
         return msb;
     }
+
+    // a >= b
+    template<typename T>
+    T gcd(T a, T b, typename std::make_signed<T>::type &x, typename std::make_signed<T>::type &y) {
+        if(b == 0) {
+            x = 1;
+            y = 0;
+            return a;
+        }
+        typename std::make_signed<T>::type x1, y1;
+        T g = gcd(b, a % b, x1, y1);
+        x = y1;
+        y = x1 - a / b * y1;
+        return g;
+    }
+
+    template<typename T, typename std::make_unsigned<T>::type Mod>
+    modular<T, Mod>& modular<T, Mod>::operator=(T value__) {
+        value__ = value__ % (T) Mod;
+        if(value__ < 0) value__ += Mod;
+        value_ = value__;
+        return *this;
+    }
+
+    template<typename T, typename std::make_unsigned<T>::type Mod>
+    modular<T, Mod> modular<T, Mod>::inverse() const {
+        assert(value_ != 0);
+        S inv, _;
+        gcd(Mod, value_, _, inv);
+        return modular<T, Mod>(inv + Mod);
+    }
+
+    template<typename T, typename std::make_unsigned<T>::type Mod>
+    modular<T, Mod>& modular<T, Mod>::operator+=(const modular<T, Mod> &other) {
+        value_ += other.value_;
+        if(value_ >= Mod)
+            value_ -= Mod;
+        return *this;
+    }
+
+    template<typename T, typename std::make_unsigned<T>::type Mod>
+    modular<T, Mod>& modular<T, Mod>::operator-=(const modular<T, Mod> &other) {
+        value_ -= other.value_;
+        if(value_ >= Mod) // overflow
+            value_ += Mod;
+        return *this;
+    }
+
+    template<typename T, typename std::make_unsigned<T>::type Mod>
+    modular<T, Mod>& modular<T, Mod>::operator*=(const modular<T, Mod> &other) {
+        value_ *= other.value_;
+        value_ %= Mod;
+        return *this;
+    }
+
+    template<typename T, typename std::make_unsigned<T>::type Mod>
+    modular<T, Mod>& modular<T, Mod>::operator/=(const modular<T, Mod> &other) {
+        modular<T, Mod> inv = other.inverse();
+        *this *= inv;
+        return *this;
+    }
+
+    // TABULAR
 
     template <typename T>
     auto sparse_table<T>::query_if_appropriate_(const T &sub_rmq) {
@@ -118,6 +231,22 @@ namespace algo {
         return ret;
     }
 };
+
+template<typename T, typename std::make_unsigned<T>::type Mod>
+algo::modular<T, Mod> pow(algo::modular<T, Mod> x, typename std::make_signed<T>::type n) {
+    if(n < 0) {
+        n = -n;
+        x = x.inverse();
+    }
+    algo::modular<T, Mod> ret = 1;
+    algo::modular<T, Mod> mul = x;
+    while(n) {
+        if(n & 1) ret *= mul;
+        mul *= mul;
+        n >>= 1;
+    }
+    return ret;
+}
 
 template<typename T>
 algo::sparse_table<T> std::min(const algo::sparse_table<T> &a, const algo::sparse_table<T> &b) {
