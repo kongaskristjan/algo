@@ -19,11 +19,31 @@ TEST(arithmetic, most_significant_bit_test) {
 TEST(range_minimum_query_test, test) {
     vector<int> v({-2, 5, 1, 2, 9, 4, 3});
     range_minimum_query<int> r(v);
-    for (int i = 0; i < v.size(); ++i) {
+    for (size_t i = 0; i < v.size(); ++i) {
         int mn = 100;
-        for (int j = i; j < v.size(); ++j) {
+        for (size_t j = i; j < v.size(); ++j) {
             mn = min(mn, v[j]);
             EXPECT_EQ(mn, r.query(i, j + 1));
         }
     }
+}
+
+TEST(range_minimum_query_test, test2d) {
+    vector<vector<int>> v({
+        {-2, 5, 1, 2, 7, 2},
+        {2, 9, 4, 4, 5, 1},
+        {3, 0, 2, -3, -2, -1},
+        {1, 2, -2, -1, 0, -1}
+    });
+    range_minimum_query<range_minimum_query<int>> r(v);
+    for (int i = 0; i < v.size(); ++i)
+        for (int j = 0; j < v[i].size(); ++j)
+            for (int iMax = i; iMax < v.size(); ++iMax)
+                for (int jMax = j; jMax < v.size(); ++jMax) {
+                    int mn = 100;
+                    for(int iIdx = i; iIdx <= iMax; ++iIdx)
+                        for(int jIdx = j; jIdx <= jMax; ++jIdx)
+                            mn = min(mn, v[iIdx][jIdx]);
+                    EXPECT_EQ(mn, r.query(i, iMax + 1, j, jMax + 1));
+                }
 }
