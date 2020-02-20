@@ -16,9 +16,9 @@ TEST(arithmetic, most_significant_bit_test) {
     EXPECT_EQ(2, most_significant_bit(7));
 }
 
-TEST(range_minimum_query_test, test) {
+TEST(sparse_table_test, test) {
     vector<int> v({-2, 5, 1, 2, 9, 4, 3});
-    range_minimum_query<int> r(v);
+    sparse_table<int> r(v);
     for (size_t i = 0; i < v.size(); ++i) {
         int mn = 100;
         for (size_t j = i; j < v.size(); ++j) {
@@ -28,14 +28,14 @@ TEST(range_minimum_query_test, test) {
     }
 }
 
-TEST(range_minimum_query_test, test2d) {
+TEST(sparse_table_test, test2d) {
     vector<vector<int>> v({
         {-2, 5, 1, 2, 7, 2},
         {2, 9, 4, 4, 5, 1},
         {3, 0, 2, -3, -2, -1},
         {1, 2, -2, -1, 0, -1}
     });
-    range_minimum_query<range_minimum_query<int>> r(v);
+    sparse_table<sparse_table<int>> r(v);
     for (int i = 0; i < v.size(); ++i)
         for (int j = 0; j < v[i].size(); ++j)
             for (int iMax = i; iMax < v.size(); ++iMax)

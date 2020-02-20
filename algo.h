@@ -13,7 +13,7 @@ namespace algo {
     constexpr int most_significant_bit(T value);
 
     template<typename T>
-    class range_minimum_query {
+    class sparse_table {
     private:
         std::vector<std::vector<T>> sparse_; // sparse_[log(query size)][start position]
 
@@ -23,22 +23,22 @@ namespace algo {
         static auto query_if_appropriate_(const T &sub_rmq, Args... sub_range);
 
     public:
-        range_minimum_query() = default;
+        sparse_table() = default;
 
         template<typename VecT>
-        explicit range_minimum_query(const VecT &v);
+        explicit sparse_table(const VecT &v);
 
         template<typename... Args>
         auto query(size_t begin, size_t end, Args... sub_ranges) const;
 
         size_t size() const { return sparse_[0].size(); }
 
-        static range_minimum_query<T> min(const range_minimum_query<T> &a, const range_minimum_query<T> &b);
+        static sparse_table<T> min(const sparse_table<T> &a, const sparse_table<T> &b);
     };
 };
 
 template<typename T>
-algo::range_minimum_query<T> std::min(const algo::range_minimum_query<T> &a, const algo::range_minimum_query<T> &b);
+algo::sparse_table<T> std::min(const algo::sparse_table<T> &a, const algo::sparse_table<T> &b);
 
 // DEFINITIONS
 
@@ -56,24 +56,24 @@ namespace algo {
     }
 
     template <typename T>
-    auto range_minimum_query<T>::query_if_appropriate_(const T &sub_rmq) {
+    auto sparse_table<T>::query_if_appropriate_(const T &sub_rmq) {
         return sub_rmq;
     }
 
     template <typename T> template <typename... Args>
-    auto range_minimum_query<T>::query_if_appropriate_(const T &sub_rmq, Args... sub_range) {
+    auto sparse_table<T>::query_if_appropriate_(const T &sub_rmq, Args... sub_range) {
         return sub_rmq.query(sub_range...);
     }
 
     template <typename T> template <typename VecT>
-    range_minimum_query<T>::range_minimum_query(const VecT &v) {
+    sparse_table<T>::sparse_table(const VecT &v) {
         assert(v.size() > 0);
         size_t levels = 1 + most_significant_bit(v.size() - 1);
         for(size_t i = v.size() - 1; i; i /= 2) ++levels;
 
         sparse_.resize(levels, std::vector<T>(v.size()));
 
-        // If T == range_minimum_query: convert vector<vector<>> v to range_minimum_query<range_minimum_query<>>
+        // If T == sparse_table: convert vector<vector<>> v to sparse_table<sparse_table<>>
         // If T == numeric type: copy
         for(size_t i = 0; i < v.size(); ++i)
             sparse_[0][i] = T(v[i]);
@@ -92,7 +92,7 @@ namespace algo {
     }
 
     template <typename T> template <typename... Args>
-    auto range_minimum_query<T>::query(size_t begin, size_t end, Args... sub_range) const {
+    auto sparse_table<T>::query(size_t begin, size_t end, Args... sub_range) const {
         assert(end - begin > 0);
 
         if(end - begin == 1) return query_if_appropriate_(sparse_[0][begin], sub_range...);
@@ -106,10 +106,10 @@ namespace algo {
     }
 
     template <typename T>
-    range_minimum_query<T> range_minimum_query<T>::min(
-            const range_minimum_query<T> &a, const range_minimum_query<T> &b) {
+    sparse_table<T> sparse_table<T>::min(
+            const sparse_table<T> &a, const sparse_table<T> &b) {
         assert(a.size() == b.size());
-        range_minimum_query<T> ret;
+        sparse_table<T> ret;
         ret.sparse_.resize(a.sparse_.size(), std::vector<T>(a.sparse_[0].size()));
         for(size_t i = 0; i < ret.sparse_.size(); ++i)
             for (size_t j = 0; j < ret.sparse_[i].size(); ++j)
@@ -120,8 +120,8 @@ namespace algo {
 };
 
 template<typename T>
-algo::range_minimum_query<T> std::min(const algo::range_minimum_query<T> &a, const algo::range_minimum_query<T> &b) {
-    return algo::range_minimum_query<T>::min(a, b);
+algo::sparse_table<T> std::min(const algo::sparse_table<T> &a, const algo::sparse_table<T> &b) {
+    return algo::sparse_table<T>::min(a, b);
 }
 
 #endif
