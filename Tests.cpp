@@ -37,6 +37,7 @@ TEST(modular_test, basic_arithm) {
     EXPECT_EQ(m10(2) + 8, 0);
     EXPECT_EQ(m10(2) - 2, 0);
     EXPECT_EQ(m10(2) - 8, 4);
+    EXPECT_EQ(-m10(3), 7);
 }
 
 TEST(modular_test, division) {

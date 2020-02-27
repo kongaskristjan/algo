@@ -42,10 +42,11 @@ namespace algo {
         modular<T, Mod>& operator-=(const modular<T, Mod> &other);
         modular<T, Mod>& operator*=(const modular<T, Mod> &other);
         modular<T, Mod>& operator/=(const modular<T, Mod> &other);
-        modular<T, Mod> operator+(const modular<T, Mod> &rhs) const { modular<T, Mod> ret(*this); return ret += rhs; };
-        modular<T, Mod> operator-(const modular<T, Mod> &rhs) const { modular<T, Mod> ret(*this); return ret -= rhs; };
-        modular<T, Mod> operator*(const modular<T, Mod> &rhs) const { modular<T, Mod> ret(*this); return ret *= rhs; };
-        modular<T, Mod> operator/(const modular<T, Mod> &rhs) const { modular<T, Mod> ret(*this); return ret /= rhs; };
+        modular<T, Mod> operator+(const modular<T, Mod> &rhs) const { modular<T, Mod> ret(*this); return ret += rhs; }
+        modular<T, Mod> operator-(const modular<T, Mod> &rhs) const { modular<T, Mod> ret(*this); return ret -= rhs; }
+        modular<T, Mod> operator*(const modular<T, Mod> &rhs) const { modular<T, Mod> ret(*this); return ret *= rhs; }
+        modular<T, Mod> operator/(const modular<T, Mod> &rhs) const { modular<T, Mod> ret(*this); return ret /= rhs; }
+        modular<T, Mod> operator-() const;
 
         T get() const { return value_; }
     };
@@ -164,6 +165,13 @@ namespace algo {
         modular<T, Mod> inv = other.inverse();
         *this *= inv;
         return *this;
+    }
+
+    template<typename T, typename std::make_unsigned<T>::type Mod>
+    modular<T, Mod> modular<T, Mod>::operator-() const {
+        modular<T, Mod> ret;
+        ret.value_ = Mod - value_;
+        return ret;
     }
 
     // TABULAR
