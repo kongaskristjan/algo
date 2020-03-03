@@ -81,6 +81,23 @@ namespace algo {
 
         static sparse_table<T> min(const sparse_table<T> &a, const sparse_table<T> &b);
     };
+
+    template<typename T>
+    class segment_tree {
+    private:
+        // linear representation of binary tree from index 1, children of N are 2N, 2N+1
+        // elements are in leaf nodes at SIZE, SIZE+1, ..., 2*SIZE-1
+        std::vector<T> tree_;
+        size_t size_;
+
+    public:
+        segment_tree() = default;
+        explicit segment_tree(const std::vector<T> &v);
+
+        T query(size_t begin, size_t end) const;
+        void update(size_t idx, T value);
+        size_t size() const { return size_; }
+    };
 };
 
 template<typename T, typename std::make_unsigned<T>::type Mod>
@@ -214,7 +231,7 @@ namespace algo {
 
     template <typename T> template <typename... Args>
     auto sparse_table<T>::query(size_t begin, size_t end, Args... sub_range) const {
-        assert(end - begin > 0);
+        assert(begin < end);
 
         if(end - begin == 1) return query_if_appropriate_(sparse_[0][begin], sub_range...);
 
@@ -237,6 +254,39 @@ namespace algo {
                 ret.sparse_[i][j] = std::min(a.sparse_[i][j], b.sparse_[i][j]);
 
         return ret;
+    }
+
+
+    template <typename T>
+    segment_tree<T>::segment_tree(const std::vector<T> &v): tree_(v.size() * 2), size_(v.size()) {
+        std::copy(v.begin(), v.end(), tree_.begin() + v.size());
+        for(size_t i = v.size() - 1; i > 0; --i)
+            tree_[i] = std::min(tree_[2 * i], tree_[2 * i + 1]);
+    }
+
+    template <typename T>
+    T segment_tree<T>::query(size_t begin, size_t end) const {
+        assert(begin < end);
+
+        size_t first = size_ + begin, last = size_ + end - 1;
+        T value = tree_[first];
+        while(first <= last) {
+            value = std::min(value, tree_[first]);
+            value = std::min(value, tree_[last]);
+            first = (first + 1) / 2;
+            last = (last - 1) / 2;
+        }
+        return value;
+    }
+
+    template <typename T>
+    void segment_tree<T>::update(size_t idx, T value) {
+        assert(idx < size_);
+
+        size_t i = size_ + idx;
+        tree_[i] = value;
+        for(i /= 2; i > 0; i /= 2)
+            tree_[i] = std::min(tree_[2 * i], tree_[2 * i + 1]);
     }
 };
 

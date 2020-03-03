@@ -118,3 +118,21 @@ TEST(sparse_table_test, test2d) {
                     EXPECT_EQ(mn, r.query(i, iMax + 1, j, jMax + 1));
                 }
 }
+
+TEST(segment_tree_test, test) {
+    vector<int> v({-2, 5, 1, 2, 9, 4, 3});
+    segment_tree<int> r(v);
+    for (size_t i = 0; i < v.size(); ++i) {
+        for (size_t j = 0; j < v.size(); ++j) {
+            int mn = 100;
+            for (size_t k = j; k < v.size(); ++k) {
+                mn = min(mn, v[k]);
+                EXPECT_EQ(mn, r.query(j, k + 1));
+            }
+        }
+
+        v[i] = 3 * i % 10;
+        r.update(i, v[i]);
+    }
+}
+
