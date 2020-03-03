@@ -59,14 +59,15 @@ namespace algo {
     // TABULAR
 
     template<typename T>
+    auto query_or_value(const T &sub_ds);
+
+    template<typename T, typename... Args>
+    auto query_or_value(const T &sub_ds, Args... sub_range);
+
+    template<typename T>
     class sparse_table {
     private:
         std::vector<std::vector<T>> sparse_; // sparse_[log(query size)][start position]
-
-        static auto query_if_appropriate_(const T &sub_rmq);
-
-        template<typename... Args>
-        static auto query_if_appropriate_(const T &sub_rmq, Args... sub_range);
 
     public:
         sparse_table() = default;
@@ -194,13 +195,13 @@ namespace algo {
     // TABULAR
 
     template <typename T>
-    auto sparse_table<T>::query_if_appropriate_(const T &sub_rmq) {
-        return sub_rmq;
+    auto query_or_value(const T &sub_ds) {
+        return sub_ds;
     }
 
-    template <typename T> template <typename... Args>
-    auto sparse_table<T>::query_if_appropriate_(const T &sub_rmq, Args... sub_range) {
-        return sub_rmq.query(sub_range...);
+    template <typename T, typename... Args>
+    auto query_or_value(const T &sub_ds, Args... sub_range) {
+        return sub_ds.query(sub_range...);
     }
 
     template <typename T> template <typename VecT>
@@ -233,13 +234,13 @@ namespace algo {
     auto sparse_table<T>::query(size_t begin, size_t end, Args... sub_range) const {
         assert(begin < end);
 
-        if(end - begin == 1) return query_if_appropriate_(sparse_[0][begin], sub_range...);
+        if(end - begin == 1) return query_or_value(sparse_[0][begin], sub_range...);
 
         size_t level = most_significant_bit(end - begin - 1);
         size_t second_index = std::min(sparse_[level].size() - 1, end - (size_t(1) << level));
 
-        auto query1 = query_if_appropriate_(sparse_[level][begin], sub_range...);
-        auto query2 = query_if_appropriate_(sparse_[level][second_index], sub_range...);
+        auto query1 = query_or_value(sparse_[level][begin], sub_range...);
+        auto query2 = query_or_value(sparse_[level][second_index], sub_range...);
         return std::min(query1, query2);
     }
 
